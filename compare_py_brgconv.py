@@ -1,11 +1,7 @@
 #!/usr/bin/python3
 
-from xmlrpc.client import Boolean
-import numpy as np
 import sys, os
 import argparse
-from xml.dom.minidom import parse
-import xml.dom.minidom
 import os.path
 import json
 
