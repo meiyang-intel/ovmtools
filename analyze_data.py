@@ -43,14 +43,18 @@ class Analyze(object):
             layer_type = layer_data["brgconv"]["node_type"] if layer_data["brgconv"]["node_type"] \
                 else layer_data["jit"]["node_type"]
             brg_info = self.__exec_info__(layer_data, "brgconv")
+            jit_info = self.__exec_info__(layer_data, "jit")
+            brg_cmd = brg_info[1]
+            jit_cmd = jit_info[1]
+            if brg_cmd != 'NA' or jit_cmd != 'NA':
+                brg_cmd, jit_cmd = self.__check_invalid_attr(brg_info[1], jit_info[1])
             if brg_info[1] != "NA":
-                brg_average_t, brg_min_t = self.__run_benchdnn__(brg_info[1])
+                brg_average_t, brg_min_t = self.__run_benchdnn__(brg_cmd)
             else:
                 brg_average_t = 0
                 brg_min_t = 0
-            jit_info = self.__exec_info__(layer_data, "jit")
             if jit_info[1] != "NA":
-                jit_average_t, jit_min_t = self.__run_benchdnn__(jit_info[1])
+                jit_average_t, jit_min_t = self.__run_benchdnn__(jit_cmd)
             else:
                 jit_average_t = 0
                 jit_min_t = 0
@@ -63,8 +67,10 @@ class Analyze(object):
             diff_average = self.__get_time_dif__(brg_average_t, jit_average_t)
             diff_min = self.__get_time_dif__(brg_min_t, jit_min_t)
 
-            res_layer += [model_name] + [layer_name] + [layer_type] + brg_info + \
-                         [str(brg_average_t)] + [str(brg_min_t)] + jit_info + \
+            res_layer += [model_name] + [layer_name] + [layer_type] + \
+                         [brg_info[0], brg_cmd, brg_info[2]] + \
+                         [str(brg_average_t)] + [str(brg_min_t)] + \
+                         [jit_info[0], jit_cmd, jit_info[2]] + \
                          [str(jit_average_t)] + [str(jit_min_t)] + \
                          [str(diff_json)] + [str(diff_average)] + [str(diff_min)]
             res.append(res_layer)
@@ -82,8 +88,25 @@ class Analyze(object):
                 exec_info.append(layer_data[exec_type][i].replace('\n', '') if layer_data[exec_type][i] else "NA")
         return exec_info
 
-    def __run_benchdnn__(self, cmd_origin):
-        cmd = self.__parse_cmd__(cmd_origin)
+    def __check_invalid_attr(self, brg_cmd_org, jit_cmd_org):
+        invalid_dnn_list = ["eltwise_hsigmoid", "eltwise_round_half_to_even", "eltwise_round_half_away_from_zero",
+                            "depthwise_scale_shift", "depthwise_prelu",
+                            "quantization_quantize_dequantize", "quantization_quantize", "binarization_depthwise"]
+        brg_cmd = brg_cmd_org
+        jit_cmd = jit_cmd_org
+        for i in invalid_dnn_list:
+            if i in brg_cmd_org or i in jit_cmd_org:
+                print("invalid attr: ", i)
+                brg_cmd = self.__del_attr__(brg_cmd_org)
+                jit_cmd = self.__del_attr__(jit_cmd_org)
+        return brg_cmd, jit_cmd
+
+    def __del_attr__(self, cmd_org):
+        cmd_tmp = cmd_org.split(" ")
+        cmd = " ".join(i for i in cmd_tmp if "attr-post-ops" not in i)
+        return cmd
+
+    def __run_benchdnn__(self, cmd):
         average_t = "0"
         min_t = "0"
         status, result = subprocess.getstatusoutput("cd ../openvino/bin/intel64/Release && numactl -C 4,5,6,7 -m 0 -- " + cmd)
@@ -96,20 +119,6 @@ class Analyze(object):
         min_t = float(tmp[2].split(":")[-1])
         average_t = float(tmp[-1].split(":")[-1])
         return average_t, min_t
-
-    @staticmethod
-    def __parse_cmd__(cmd_origin):
-        invalid_dnn_list = ["eltwise_hsigmoid", "eltwise_round_half_to_even", "eltwise_round_half_away_from_zero"]
-        cmd_tmp = []
-        for key in invalid_dnn_list:
-            if key in cmd_origin:
-                cmd_tmp = cmd_origin.split(key)
-        if cmd_tmp:
-            _cmd = "".join([i for i in cmd_tmp])
-            cmd = _cmd.replace("++", "+")
-        else:
-            cmd = cmd_origin
-        return cmd
 
     @staticmethod
     def __get_time_dif__(brg_time, no_brg_time):
