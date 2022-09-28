@@ -34,6 +34,7 @@ class Analyze(object):
     def analyze_data(self, json_data):
         res = []
         model_name = json_data["model_name"]
+        print(model_name)
         for layer_id in range(len(json_data) - 1):
             res_layer = []
             print(layer_id)
@@ -87,6 +88,7 @@ class Analyze(object):
         min_t = "0"
         status, result = subprocess.getstatusoutput("cd ../openvino/bin/intel64/Release && numactl -C 4,5,6,7 -m 0 -- " + cmd)
         # assert status == 0, "Error running benchdnn"
+        print("cmd: ", cmd)
         if status != 0:
             print("Error running benchdnn")
             return 0, 0
