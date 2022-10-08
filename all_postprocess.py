@@ -51,7 +51,7 @@ detail_f = open(f'{new_log}.layer.csv', 'w')
 detail_f.write('name,new_fps,base_fps,ratio,delta(ms),layer1,time1(ms),,,,,,,,,,\n')
 for (i, name, new_fps, base_fps) in result_sets:
     os.environ['USE_BRG'] = '0'
-    outputA = subprocess.run([f'{ov_bench_dir}/benchmark_app', '-m', name] + args, capture_output=True)
+    outputA = subprocess.run([f'{ov_bench_dir}/benchmark_app', '-m', name] + args + ['-report_folder=./b'], capture_output=True)
     out = outputA.stdout.decode()
     if outputA.returncode == 0:    
         with open('test1.log', 'w') as f:
@@ -59,7 +59,7 @@ for (i, name, new_fps, base_fps) in result_sets:
     else:
         raise Exception(f'exec bench error, model:{name}\n error: {out}')
     os.environ['USE_BRG'] = '1'
-    outputA = subprocess.run([f'{ov_bench_dir}/benchmark_app', '-m', name] + args, capture_output=True)
+    outputA = subprocess.run([f'{ov_bench_dir}/benchmark_app', '-m', name] + args + ['-report_folder=./a'], capture_output=True)
     out = outputA.stdout.decode()
     if outputA.returncode == 0:
         with open('test2.log', 'w') as f:
