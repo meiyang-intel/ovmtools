@@ -2,7 +2,7 @@
 
 ### Step1 Running all_test.sh
 # Change the model_dir and common_args
-cpus=4,5,6,7
+cpus=0,1,2,3
 node=0
 model_dir=`pwd`/../model/inn_nfs_share/cv_bench_cache/try_builds_cache/sk_13sept_75models_22.2/
 bin_dir=`pwd`/../openvino/bin/intel64/Release
@@ -51,8 +51,8 @@ binA=`pwd`/../openvino/bin/intel64/Release
 
 mkdir -p ./enable_brgconv
 mkdir -p ./disable_brgconv
-mkdir -p ./output_fp32
-mkdir -p ./output_int8
+mkdir -p ./all_test_output_fp32
+mkdir -p ./all_test_output_int8
 
 export OV_CPU_DEBUG_LOG='CreatePrimitives;conv.cpp'
 export VERBOSE_CONVERT=`pwd`/../openvino/src/plugins/intel_cpu/thirdparty/onednn/scripts/verbose_converter
@@ -67,7 +67,7 @@ do
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./enable_brgconv/exec_graph_enable_brgconv.xml -report_folder=./enable_brgconv |& tee ./enable_brgconv/pc_enable_brgconv.txt
   export USE_BRG=0
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./disable_brgconv/exec_graph_disable_brgconv.xml -report_folder=./disable_brgconv |& tee ./disable_brgconv/pc_disable_brgconv.txt
-  python3 compare_py_brgconv.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./output_fp32
+  python3 compare_py_brgconv.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./all_test_output_fp32
 done
 
 #int8
@@ -79,10 +79,10 @@ do
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./enable_brgconv/exec_graph_enable_brgconv.xml -report_folder=./enable_brgconv |& tee ./enable_brgconv/pc_enable_brgconv.txt
   export USE_BRG=0
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./disable_brgconv/exec_graph_disable_brgconv.xml -report_folder=./disable_brgconv |& tee ./disable_brgconv/pc_disable_brgconv.txt
-  python3 compare_py_brgconv.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./output_int8
+  python3 compare_py_brgconv.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./all_test_output_int8
 done
 
 ### Step4 Change the result of Step3 to csv
 # Collect convolution layer data
-python3 analyze_conv.py -i ./output_fp32/ -o result_fp32_conv.csv
-python3 analyze_conv.py -i ./output_int8/ -o result_int8_conv.csv
+python3 analyze_conv.py -i ./all_test_output_fp32/ -o all_test_result_fp32_conv.csv
+python3 analyze_conv.py -i ./all_test_output_int8/ -o all_test_result_int8_conv.csv
