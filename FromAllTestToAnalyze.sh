@@ -12,6 +12,33 @@ mkdir -p ./b
 export ONEDNN_VERBOSE=0
 common_args=" -t 5 -nireq=1 -nstreams 1 -nthreads 4 -pc -infer_precision f32 -json_stats -report_type=detailed_counters"
 
+# fp32
+new_log=brg.f32
+base_log=jit.f32
+
+# without brg
+export USE_BRG=0
+numactl -C $cpus -m $node -- python3 all_test.py $bin_dir $base_log $model_dir $common_args -report_folder=./b
+# with brg
+export USE_BRG=1
+numactl -C $cpus -m $node -- python3 all_test.py $bin_dir $new_log $model_dir $common_args -report_folder=./a
+numactl -C $cpus -m $node -- python3 all_postprocess.py $new_log.log $base_log.log -0.05 $bin_dir default_check $common_args
+numactl -C $cpus -m $node -- python3 all_postprocess.py $base_log.log $new_log.log -0.05 $bin_dir check_fast $common_args
+
+#i8
+model_dir=`pwd`/../model/inn_nfs_share/cv_bench_cache/sk_13sept_75models_22.2_int8
+new_log=brg.i8
+base_log=jit.i8
+
+# without brg
+export USE_BRG=0
+numactl -C $cpus -m $node -- python3 all_test.py $bin_dir $base_log $model_dir $common_args -report_folder=./b
+# with brg
+export USE_BRG=1
+numactl -C $cpus -m $node -- python3 all_test.py $bin_dir $new_log $model_dir $common_args -report_folder=./a
+numactl -C $cpus -m $node -- python3 all_postprocess.py $new_log.log $base_log.log -0.05 $bin_dir default_check $common_args
+numactl -C $cpus -m $node -- python3 all_postprocess.py $base_log.log $new_log.log -0.05 $bin_dir check_fast $common_args
+
 ### Step2 Collect model name
 # model name in brg.xxx.log.layer.csv and jit.xxx.log.layer.csv
 python3 parse_model_all_test_res.py
