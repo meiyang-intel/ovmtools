@@ -67,7 +67,7 @@ do
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./enable_brgconv/exec_graph_enable_brgconv.xml -report_folder=./enable_brgconv |& tee ./enable_brgconv/pc_enable_brgconv.txt
   export USE_BRG=0
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./disable_brgconv/exec_graph_disable_brgconv.xml -report_folder=./disable_brgconv |& tee ./disable_brgconv/pc_disable_brgconv.txt
-  python3 compare_py_brgconv.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./all_test_output_fp32
+  python3 compare_py_brgconv_100.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./all_test_output_fp32
 done
 
 #int8
@@ -79,10 +79,10 @@ do
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./enable_brgconv/exec_graph_enable_brgconv.xml -report_folder=./enable_brgconv |& tee ./enable_brgconv/pc_enable_brgconv.txt
   export USE_BRG=0
   LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./disable_brgconv/exec_graph_disable_brgconv.xml -report_folder=./disable_brgconv |& tee ./disable_brgconv/pc_disable_brgconv.txt
-  python3 compare_py_brgconv.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./all_test_output_int8
+  python3 compare_py_brgconv_100.py ./enable_brgconv/pc_enable_brgconv.txt ./disable_brgconv/pc_disable_brgconv.txt -m ${line} -output_file ./all_test_output_int8
 done
 
 ### Step4 Change the result of Step3 to csv
 # Collect convolution layer data
-python3 analyze_conv.py -i ./all_test_output_fp32/ -o all_test_result_fp32_conv.csv
-python3 analyze_conv.py -i ./all_test_output_int8/ -o all_test_result_int8_conv.csv
+python3 analyze_conv_flexCPU.py -c $cpus -i ./all_test_output_fp32/ -o all_test_result_fp32_conv.csv
+python3 analyze_conv_flexCPU.py -c $cpus -i ./all_test_output_int8/ -o all_test_result_int8_conv.csv
