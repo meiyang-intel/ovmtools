@@ -12,7 +12,7 @@ common_args=" -t 5 -nireq=1 -nstreams 1 -nthreads 4 -pc -infer_precision f32 -js
 ### Step1 Collect model name
 # Get the model name files, no_filter_fp32_model.txt and no_filter_int8_model.txt
 find $model_dir -name *.xml > no_filter_fp32_model.txt
-find $model_int8 -name *.xml > no_filter_int8_model.txt
+find $model_int8_dir -name *.xml > no_filter_int8_model.txt
 
 ### Step 2 Collect comparing benchmark data of these models
 # Input the file name of fp32 output
