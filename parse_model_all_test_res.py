@@ -1,12 +1,6 @@
 #!/usr/bin/python3
 
-from xmlrpc.client import Boolean
-import numpy as np
-import sys, os
-import argparse
-from xml.dom.minidom import parse
-import xml.dom.minidom
-import json
+import os
 
 os_path = os.path.abspath(os.path.dirname(os.getcwd()))
 
@@ -29,7 +23,7 @@ class Model:
         for file in path:
             with open(file, "r") as fp32_f:
                 data = fp32_f.readlines()
-                model_list = self.parse_model(data[1:])
+                model_list += self.parse_model(data[1:])
         return model_list
 
     @staticmethod
