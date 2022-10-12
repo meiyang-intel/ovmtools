@@ -293,9 +293,11 @@ if __name__ == "__main__":
     parser.add_argument("-output_file", default="", type=str)
     args = parser.parse_args()
     with open(args.exec_graph_enable_brgconv or './enable_brgconv/exec_graph_enable_brgconv.xml') as f:
+        print("Enable brg: ", args.exec_graph_enable_brgconv)
         exec_graph_enable_brgconv = f.readlines()
 
     with open(args.exec_graph_disable_brgconv or './disable_brgconv/exec_graph_disable_brgconv.xml') as f:
+        print("Disable brg: ", args.exec_graph_disable_brgconv)
         exec_graph_disable_brgconv = f.readlines()
 
     all_dict = {"model_name": args.model}
