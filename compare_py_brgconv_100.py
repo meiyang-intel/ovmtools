@@ -44,7 +44,7 @@ pc_log_start_tag = "[ INFO ] Performance counts for 0-th infer request:"
 pc_log_end_tag = "Total time:"
 
 
-def analyse(log_file, json_dir):
+def analyse(log_file):
     pc_by_type = {}
     pc_by_node = {}
     statis_by_type = {}
@@ -52,6 +52,7 @@ def analyse(log_file, json_dir):
     stat = []
     verbose_by_name = {}
     layers = None
+    json_dir = "./" + log_file.split("/")[-2]
     if os.path.isfile(f'{json_dir}/benchmark_detailed_counters_report.json'):
         with open(f'{json_dir}/benchmark_detailed_counters_report.json', "r") as f:
             layers = json.loads(f.read())
@@ -137,10 +138,8 @@ def smart_val(v):
 
 
 def show_compare_result(log_file_enable_brgconv, log_file_disable_brgconv, all_dict):
-    pc_by_node0, pc_by_type0, stat0, verbose_by_name0, statis_by_type0 = analyse(log_file_enable_brgconv,
-                                                                                 './enable_brgconv/')
-    pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_file_disable_brgconv,
-                                                                                 './disable_brgconv/')
+    pc_by_node0, pc_by_type0, stat0, verbose_by_name0, statis_by_type0 = analyse(log_file_enable_brgconv)
+    pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_file_disable_brgconv)
     print("{}   :    {}".format(log_file_enable_brgconv, log_file_disable_brgconv))
 
     print("*********************************************************")
