@@ -7,6 +7,8 @@ node=0
 model_dir=`pwd`/../model/inn_nfs_share/cv_bench_cache/try_builds_cache/sk_13sept_75models_22.2/
 bin_dir=`pwd`/../openvino/bin/intel64/Release
 
+rm -rf ./a
+rm -rf ./b
 mkdir -p ./a
 mkdir -p ./b
 export ONEDNN_VERBOSE=0
@@ -41,6 +43,8 @@ numactl -C $cpus -m $node -- python3 all_postprocess.py $base_log.log $new_log.l
 
 ### Step2 Collect model name
 # model name in brg.xxx.log.layer.csv and jit.xxx.log.layer.csv
+rm -rf fp32_model.txt
+rm -rf int8_model.txt
 python3 parse_model_all_test_res.py
 # Get the model name files, fp32_model.txt and int8_model.txt
 
@@ -49,6 +53,10 @@ python3 parse_model_all_test_res.py
 # Input the file name of int8 output
 binA=`pwd`/../openvino/bin/intel64/Release
 
+rm -rf enable_brgconv
+rm -rf disable_brgconv
+rm -rf all_test_output_fp32
+rm -rf all_test_output_int8
 mkdir -p ./enable_brgconv
 mkdir -p ./disable_brgconv
 mkdir -p ./all_test_output_fp32
@@ -84,5 +92,7 @@ done
 
 ### Step4 Change the result of Step3 to csv
 # Collect convolution layer data
+rm -rf all_test_result_fp32_conv.csv
+rm -rf all_test_result_int8_conv.csv
 python3 analyze_conv_flexCPU.py -c $cpus -i ./all_test_output_fp32/ -o all_test_result_fp32_conv.csv
 python3 analyze_conv_flexCPU.py -c $cpus -i ./all_test_output_int8/ -o all_test_result_int8_conv.csv
