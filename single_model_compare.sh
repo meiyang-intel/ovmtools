@@ -29,4 +29,4 @@ export DNNL_MAX_CPU_ISA=AVX512_CORE_VNNI
 LD_LIBRARY_PATH=${binA}/lib ONEDNN_VERBOSE=0 taskset -c $cpus numactl -C $cpus -m $node -- /usr/bin/time -v ${binA}/benchmark_app -m ${line} $common_args -exec_graph_path ./single_b/single_b_exec_graph.xml -report_folder=./single_b |& tee ./single_b/single_b_pc.txt
 python3 compare_py_brgconv_100.py ./single_a/single_a_pc.txt ./single_b/single_b_pc.txt ./single_a/single_a_exec_graph.xml ./single_b/single_b_exec_graph.xml -m ${line} -output_file ./single_output
 
-python3 analyze_data.py -i ./single_output/ -o single_result.csv
+python3 analyze_data.py -c $cpus -i ./single_output/ -o single_result.csv -env1 DNNL_MAX_CPU_ISA=AVX512_CORE_AMX -env2 DNNL_MAX_CPU_ISA=AVX512_CORE_VNNI
