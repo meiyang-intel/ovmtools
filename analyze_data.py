@@ -7,9 +7,12 @@ import subprocess
 
 
 class Analyze(object):
-    def __init__(self, input_path, output_csv):
+    def __init__(self, cpu, input_path, output_csv, env1, env2):
+        self.cpu = cpu
         self.input = input_path
         self.output = output_csv
+        self.env1 = env1
+        self.env2 = env2
         self.model = []
         self.data = []
 
@@ -49,12 +52,12 @@ class Analyze(object):
             if brg_cmd != 'NA' or jit_cmd != 'NA':
                 brg_cmd, jit_cmd = self.__check_invalid_attr(brg_info[1], jit_info[1])
             if brg_info[1] != "NA":
-                brg_average_t, brg_min_t = self.__run_benchdnn__(brg_cmd)
+                brg_average_t, brg_min_t = self.__run_benchdnn__(brg_cmd, "a")
             else:
                 brg_average_t = 0
                 brg_min_t = 0
             if jit_info[1] != "NA":
-                jit_average_t, jit_min_t = self.__run_benchdnn__(jit_cmd)
+                jit_average_t, jit_min_t = self.__run_benchdnn__(jit_cmd, "b")
             else:
                 jit_average_t = 0
                 jit_min_t = 0
@@ -106,10 +109,17 @@ class Analyze(object):
         cmd = " ".join(i for i in cmd_tmp if "attr-post-ops" not in i)
         return cmd
 
-    def __run_benchdnn__(self, cmd):
+    def __run_benchdnn__(self, cmd, flag):
         average_t = "0"
         min_t = "0"
-        status, result = subprocess.getstatusoutput("cd ../openvino/bin/intel64/Release && numactl -C 4,5,6,7 -m 0 -- " + cmd)
+        if flag == "a":
+            status, result = subprocess.getstatusoutput("cd ../openvino/bin/intel64/Release && "
+                                                        "export " + self.env1 +
+                                                        " && numactl -C " + self.cpu + " -m 0 -- " + cmd)
+        elif flag == "b":
+            status, result = subprocess.getstatusoutput("cd ../openvino/bin/intel64/Release && "
+                                                        "export " + self.env2 +
+                                                        " && numactl -C " + self.cpu + " -m 0 -- " + cmd)
         # assert status == 0, "Error running benchdnn"
         print("cmd: ", cmd)
         if status != 0:
@@ -144,8 +154,11 @@ class Analyze(object):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--cpus", help="the core number of cpu", default="4,5,6,7", type=str)
     parser.add_argument("-i", "--input", help="the folder of json data", default="", type=str)
     parser.add_argument("-o", "--output", help="write into csv", default="result.csv", type=str)
+    parser.add_argument("-env1", "--environment1", help="set env2", type=str)
+    parser.add_argument("-env2", "--environment2", help="set env2", default="result.csv", type=str)
     args = parser.parse_args()
-    data = Analyze(args.input, args.output)
+    data = Analyze(args.cpus, args.input, args.output, args.environment1, args.environment2)
     data.get_data()
