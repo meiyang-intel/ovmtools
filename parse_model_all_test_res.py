@@ -7,8 +7,8 @@ os_path = os.path.abspath(os.path.dirname(os.getcwd()))
 
 class Model:
     def __init__(self, path=os.getcwd()):
-        self.fp32_path = [os.path.join(path, 'brg.f32.log.layer.csv'), os.path.join(path, 'jit.f32.log.layer.csv')]
-        self.int8_path = [os.path.join(path, 'brg.i8.log.layer.csv'), os.path.join(path, 'jit.i8.log.layer.csv')]
+        self.fp32_path = [os.path.join(path, 'brg.f32.log.layer.csv')]
+        self.int8_path = [os.path.join(path, 'brg.i8.log.layer.csv')]
         self.fp32_model = []
         self.int8_model = []
 
