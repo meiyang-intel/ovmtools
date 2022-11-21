@@ -4,7 +4,7 @@
 # Change the model_dir and common_args
 cpus=0,1,2,3
 node=0
-model_dir=`pwd`/../model/inn_nfs_share/cv_bench_cache/try_builds_cache/sk_13sept_75models_22.2/
+model_dir=`pwd`/../model/inn_nfs_share/cv_bench_cache/try_builds_cache/sk_8oct_100models_22.3.0-8234-c83ad806
 bin_dir=`pwd`/../openvino/bin/intel64/Release
 
 rm -rf ./a
@@ -12,7 +12,7 @@ rm -rf ./b
 mkdir -p ./a
 mkdir -p ./b
 export ONEDNN_VERBOSE=0
-common_args=" -t 5 -nireq=1 -nstreams 1 -nthreads 4 -pc -infer_precision f32 -json_stats -report_type=detailed_counters"
+common_args=" -hint=none -nstreams=1 -nthreads=4 -t=10 -b 1 -nireq=2 -pc -json_stats -report_type=detailed_counters"
 
 # fp32
 new_log=brg.f32
@@ -28,7 +28,7 @@ numactl -C $cpus -m $node -- python3 all_postprocess.py $new_log.log $base_log.l
 numactl -C $cpus -m $node -- python3 all_postprocess.py $base_log.log $new_log.log -0.05 $bin_dir check_fast $common_args
 
 #i8
-model_dir=`pwd`/../model/inn_nfs_share/cv_bench_cache/sk_13sept_75models_22.2_int8
+model_dir=`pwd`/../model/inn_nfs_share/cv_bench_cache/sk_8oct_100models_22.3.0-8234-c83ad806_int8
 new_log=brg.i8
 base_log=jit.i8
 
