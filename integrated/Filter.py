@@ -33,12 +33,6 @@ class FilterModel():
             result_sort_sets = (fpsA_median[1], fpsA_median[0], fpsB_median[0])
         return results_lst, result_sort_sets
 
-    def write_benchamrk_temp_log(self, file, benchmark_log):
-        with open(file, 'w') as f:
-            f.write(benchmark_log)
-
-    def run_compare_tool(self, result_sort_sets, save_path, reportA, reportB):
-        self.write_benchamrk_temp_log(f'{save_path}/testA.log', self.logA)
-        self.write_benchamrk_temp_log(f'{save_path}/testB.log', self.logB)
+    def run_filter_compare_tool(self, save_path, reportA, reportB):
         result = compare_vis.show_compare_result(f'{save_path}/testA.log', f'{save_path}/testB.log', reportA, reportB)
         return result
