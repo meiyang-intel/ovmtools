@@ -133,7 +133,8 @@ def analyse(log_file, json_dir):
                 stat.append(l.strip("\t"))
                 continue
             if l.startswith("[ INFO ] 	Average:") or \
-               l.startswith("[ INFO ] Throughput:"):
+               l.startswith("[ INFO ] Throughput:") or \
+               l.startswith("[ INFO ]    Average:"):
                 stat.append(l[9:].strip(" ").strip("\t"))
                 continue
 
@@ -201,10 +202,10 @@ def choose_color(t0, t1):
 
 
 
-def show_compare_result(log_fileA, log_fileB):
+def show_compare_result(log_fileA, log_fileB, reportA, reportB):
 
-    pc_by_node0, pc_by_type0, stat0, verbose_by_name0, statis_by_type0 = analyse(log_fileA, './a/')
-    pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_fileB, './b/')
+    pc_by_node0, pc_by_type0, stat0, verbose_by_name0, statis_by_type0 = analyse(log_fileA, reportA)
+    pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_fileB, reportB)
     
 
     print("{}   :    {}".format(log_fileA, log_fileB))
@@ -389,6 +390,8 @@ if __name__ == "__main__":
     parser.add_argument("exec_graphA", nargs="?")
     parser.add_argument("exec_graphB", nargs="?")
     parser.add_argument("-s", "--show_verbose", default=True, help="show onednn verbose", type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument("-rA", "--reportA", help="report folderA", default="./a", type=str)
+    parser.add_argument("-rB", "--reportB", help="report folderB", default="./b", type=str)
     args = parser.parse_args()
     with open(args.exec_graphA or 'exec_graph_A.xml') as f:
         exec_graphA = f.readlines()
@@ -396,6 +399,6 @@ if __name__ == "__main__":
     with open(args.exec_graphB or 'exec_graph_B.xml') as f:
         exec_graphB = f.readlines()
 
-    show_compare_result(args.log_fileA or 'pcA.txt', args.log_fileB or 'pcB.txt')
+    show_compare_result(args.log_fileA or 'pcA.txt', args.log_fileB or 'pcB.txt', args.reportA, args.reportB)
 
 #show_result(args.log_files[0], pc_by_node0, pc_by_type0, stat0)
