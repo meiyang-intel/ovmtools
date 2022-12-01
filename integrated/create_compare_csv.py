@@ -139,7 +139,14 @@ def smart_val(v):
 
 def show_compare_result(log_file_A, log_file_B, all_dict, prefixA, prefixB, reportA, reportB):
     pc_by_node0, pc_by_type0, stat0, verbose_by_name0, statis_by_type0 = analyse(log_file_A, reportA)
-    pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_file_B, reportB)
+    if prefixB:
+        pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_file_B, reportB)
+    else:
+        pc_by_node1 = []
+        pc_by_type1 = []
+        stat1 = []
+        verbose_by_name1 = ""
+        statis_by_type1 = []
     print("{}   :    {}".format(log_file_A, log_file_B))
 
     print("*********************************************************")
@@ -156,8 +163,8 @@ def show_compare_result(log_file_A, log_file_B, all_dict, prefixA, prefixB, repo
         A_info = []
         B_info = []
         time_diff = 0
-        info0, time0, layer0, exectype0, layout0 = get_exec_info(pc_by_node0, name)  # enable brgconv
-        info1, time1, layer1, exectype1, layout1 = get_exec_info(pc_by_node1, name)  # disable brgconv
+        info0, time0, layer0, exectype0, layout0 = get_exec_info(pc_by_node0, name)  # prefixA
+        info1, time1, layer1, exectype1, layout1 = get_exec_info(pc_by_node1, name)  # prefixB
         layer_info = [layerid, name]
         A_info = [layer0, exectype0, layout0, time0]
         B_info = [layer1, exectype1, layout1, time1]
@@ -186,7 +193,8 @@ def show_compare_result(log_file_A, log_file_B, all_dict, prefixA, prefixB, repo
     print("")
     for i in range(len(stat0)):
         s0 = stat0[i].rstrip("\n").rstrip("\r")
-        s1 = stat1[i].rstrip("\n").rstrip("\r")
+        if stat1: s1 = stat1[i].rstrip("\n").rstrip("\r")
+        else: s1 = "None"
         print("{:>50}   {:<50} ".format(s0, s1))
 
     return all_dict
@@ -298,9 +306,12 @@ def main(exec_graph_A, exec_graph_B, model, log_file_A, log_file_B, prefixA, pre
         print("prefixA: ", exec_graph_A)
         exec_graph_A = f.readlines()
 
-    with open(exec_graph_B or './b/exec_graph_B.xml') as f:
-        print("prefixB: ", exec_graph_B)
-        exec_graph_B = f.readlines()
+    if prefixB:
+        with open(exec_graph_B or './b/exec_graph_B.xml') as f:
+            print("prefixB: ", exec_graph_B)
+            exec_graph_B = f.readlines()
+    else:
+        exec_graph_B = ""
 
     all_dict = {"model_name": model}
     data_cmp = show_compare_result(log_file_A or './testA.log', log_file_B or './testB.log',

@@ -205,8 +205,14 @@ def choose_color(t0, t1):
 def show_compare_result(log_fileA, log_fileB, reportA, reportB):
 
     pc_by_node0, pc_by_type0, stat0, verbose_by_name0, statis_by_type0 = analyse(log_fileA, reportA)
-    pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_fileB, reportB)
-    
+    if reportB:
+        pc_by_node1, pc_by_type1, stat1, verbose_by_name1, statis_by_type1 = analyse(log_fileB, reportB)
+    else:
+        pc_by_node1 = []
+        pc_by_type1 = []
+        stat1 = []
+        verbose_by_name1 = ""
+        statis_by_type1 = []
 
     print("{}   :    {}".format(log_fileA, log_fileB))
     print("*********************************************************")
@@ -253,8 +259,12 @@ def show_compare_result(log_fileA, log_fileB, reportA, reportB):
             info1 = "---"
         
         color_start, color_end = choose_color(time0, time1)
-        print("{} {:>8} {:>24}({:>5.1f}%)   ({:>5.1f}%){:<24}   {} {}".format(color_start, smart_val(time1-time0), info0, time0 * 100.0 / all_time0, time1 * 100 / all_time1, info1, type_name, color_end))
-        results.append((type_name, (time1-time0)/1000))
+        if all_time1:
+            print("{} {:>8} {:>24}({:>5.1f}%)   ({:>5.1f}%){:<24}   {} {}".format(color_start, smart_val(time1-time0), info0, time0 * 100.0 / all_time0, time1 * 100 / all_time1, info1, type_name, color_end))
+            results.append((type_name, (time1 - time0) / 1000))
+        else:
+            print("{} {:>8} {:>24}({:>5.1f}%)   ({:>5.1f}%){:<24}   {} {}".format(color_start, smart_val(time1-time0), info0, time0 * 100.0 / all_time0, 0, info1, type_name, color_end))
+            results.append((type_name, (time0)/1000))
 
     print("*********************************************************")
     print("*                   comparing by type                   *")
@@ -294,7 +304,8 @@ def show_compare_result(log_fileA, log_fileB, reportA, reportB):
         
         color_start, color_end = choose_color(time0, time1)
         print("{} {:>8} {:>32}   {:<32}   {} {}".format(color_start, smart_val(time1-time0),  info0, info1, type_name, color_end))
-        results.append((type_name, (time1-time0)/1000))
+        if reportB:  results.append((type_name, (time1-time0)/1000))
+        else: results.append((type_name, (time0)/1000))
 
     color_start, color_end = choose_color(total_time0, total_time1)
     print("")
@@ -376,7 +387,8 @@ onednn_verbose,info,prim_template:operation,engine,primitive,implementation,prop
     print("")
     for i in range(len(stat0)):
         s0 = stat0[i].rstrip("\n").rstrip("\r")
-        s1 = stat1[i].rstrip("\n").rstrip("\r")
+        if stat1: s1 = stat1[i].rstrip("\n").rstrip("\r")
+        else: s1 = "None"
         print("{:>50}   {:<50} ".format(s0, s1))
 
     return results

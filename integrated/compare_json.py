@@ -29,8 +29,9 @@ class CompareModel():
 
 
 class Analyze(object):
-    def __init__(self, cpu, input_path, output_csv, binA_prefix, binB_prefix, binA, binB=""):
+    def __init__(self, cpu, benchdnn_flag, input_path, output_csv, binA_prefix, binB_prefix, binA, binB=""):
         self.cpu = cpu
+        self.benchdnn_flag = benchdnn_flag
         self.input = input_path
         self.output = output_csv
         self.model = []
@@ -136,6 +137,8 @@ class Analyze(object):
     def __run_benchdnn__(self, cmd, flag):
         average_t = "0"
         min_t = "0"
+        if self.benchdnn_flag:
+            return 0, 0
         if flag == "a":
             path = "cd " + self.binA
             status, result = subprocess.getstatusoutput(path + "numactl -C " + self.cpu + " -m 0 -- " + cmd)

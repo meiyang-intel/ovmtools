@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import subprocess
-from Filter import FilterModel
+from Filter import Model
 import configparser
 from compare_json import CompareModel
 from compare_json import Analyze
@@ -17,7 +17,7 @@ class Process:
         self.benchdnn = eval(self.config['Mode']['need_run_benchdnn'])
         self.compare_bin = eval(self.config['Mode']['diff_bin'])
         self.compare_env = eval(self.config['Mode']['diff_env'])
-        self.need_layer_info = eval(self.config['Layer']['need_layer_into'])
+        self.need_layer_info = eval(self.config['Layer']['need_layer_info'])
         self.logA_detail_file = ""
         self.logB_detail_file = ""
         self.outA_file = ""
@@ -30,6 +30,7 @@ class Process:
         self.compare_max_lst = []
         self.filter_model_list = []
         self.verbose = ""
+        self.single = eval(self.config['Mode']['single'])
 
     def get_models(self):
         self.fp32_model = Path(self.fp32_model).rglob('*.xml') if os.path.isdir(self.fp32_model) else self.fp32_model
@@ -48,12 +49,18 @@ class Process:
         self.outA_file = open(f'{save_path}/{binA_prefix}.log', 'w')
         self.logB_detail_file = open(f'{save_path}/{binB_prefix}_detail.log', 'w')
         self.outB_file = open(f'{save_path}/{binB_prefix}.log', 'w')
-        if self.filter:
+        self.filter_layer_file = open(f'{save_path}/{binA_prefix}.layer.csv', 'w')
+        if not self.single:
             self.compare_max_file = open(f'{save_path}/{binA_prefix}.vs.{binB_prefix}.max.csv','w')
             compare_filter_A_B_file_title = 'model,' + f'{binA_prefix}' + ',' + f'{binB_prefix}' + ',' + "ratio (A-B)/B," + 'geomean\n'
             self.compare_max_file.write(compare_filter_A_B_file_title)
-            self.filter_layer_file = open(f'{save_path}/{binA_prefix}.layer.csv','w')
             layer_title = f'name,{binA_prefix}_fps,{binB_prefix}_fps,ratio,delta(ms),layer1,time1(ms),,,,,,,,,,\n'
+            self.filter_layer_file.write(layer_title)
+        else:
+            self.compare_max_file = open(f'{save_path}/{binA_prefix}.max.csv', 'w')
+            compare_filter_A_B_file_title = 'model,' + f'{binA_prefix}\n'
+            self.compare_max_file.write(compare_filter_A_B_file_title)
+            layer_title = f'name,{binA_prefix}_fps,layer1,time1(ms),,,,,,,,,,\n'
             self.filter_layer_file.write(layer_title)
 
     def process_file(self, precision):
@@ -69,8 +76,7 @@ class Process:
         self.outA_file.close()
         self.logB_detail_file.close()
         self.outB_file.close()
-        if self.filter:
-            self.compare_max_file.close()
+        self.compare_max_file.close()
 
     def process_benchmark(self):
         if self.fp32_model:
@@ -92,9 +98,6 @@ class Process:
         binB = self.config['BIN']['binB']
         envA = self.config['Mode']['envA']
         envB = self.config['Mode']['envB']
-        if self.filter:
-            compare_max_lst = []
-            filter_model_list = []
         for idx, path in enumerate(models):
             model_path = os.path.normpath(str(path))
             print(f'{idx:3d} {model_path}... ', end='')
@@ -102,7 +105,15 @@ class Process:
             fps_resultA = []
             benchmark_log_B = []
             fps_resultB = []
-            if self.compare_bin and self.compare_env:
+            if self.single:
+                benchmark_log_A, fps_resultA = self.run_benmark_app(binA, model=model_path,
+                                                                    common_args=common_args,
+                                                                    log_file=self.logA_detail_file,
+                                                                    out_file=self.outA_file,
+                                                                    report_folder=f'{save_path}/a',
+                                                                    exec_graph=f'{save_path}/exec_graph_A.xml')
+                binB = binA
+            elif self.compare_bin and self.compare_env:
                 benchmark_log_A, fps_resultA = self.run_benmark_app(binA, envA, model=model_path,
                                                                     common_args=common_args,
                                                                     log_file=self.logA_detail_file,
@@ -141,30 +152,21 @@ class Process:
                                                                     out_file=self.outB_file,
                                                                     report_folder=f'{save_path}/b',
                                                                     exec_graph=f'{save_path}/exec_graph_B.xml')
-            else:
-                benchmark_log_A, fps_resultA = self.run_benmark_app(binA, model=model_path,
-                                                                    common_args=common_args,
-                                                                    log_file=self.logA_detail_file,
-                                                                    out_file=self.outA_file,
-                                                                    report_folder=f'{save_path}/a',
-                                                                    exec_graph=f'{save_path}/exec_graph_A.xml')
+                binB = binA
+
             if benchmark_log_A: self.write_benchamrk_temp_log(f'{save_path}/testA.log', benchmark_log_A)
             if benchmark_log_B: self.write_benchamrk_temp_log(f'{save_path}/testB.log', benchmark_log_B)
 
-            if self.filter and benchmark_log_B:
-                result_sort_sets = self.get_filter_data(benchmark_log_A, benchmark_log_B, fps_resultA,
-                                                        fps_resultB, precision, f'{save_path}/a', f'{save_path}/b')
-            if self.need_layer_info and result_sort_sets:
-                create_layer_json = CompareModel(f'{save_path}/exec_graph_A.xml', f'{save_path}/exec_graph_B.xml',
-                                                model_path, f'{save_path}/testA.log', f'{save_path}/testB.log',
-                                                binA_prefix, binB_prefix, f'{save_path}/a', f'{save_path}/b', save_path)
-                create_layer_json.run_create_compare_csv_tool()
-        if self.filter:
-            self.write_into_max_csv(self.compare_max_file, self.compare_max_lst)
-        if self.need_layer_info:
-            create_compare_res = Analyze(self.cpus, f'{save_path}/json_data', f'{save_path}/{binA_prefix}_{binB_prefix}.csv',
-                                         binA_prefix, binB_prefix, binA, binB)
-            create_compare_res.get_data()
+            if self.single:
+                self.get_single_data(save_path, model_path, benchmark_log_A, fps_resultA, f'{save_path}/a', binA_prefix)
+            elif benchmark_log_B and benchmark_log_A:
+                self.get_filter_data(save_path, model_path, benchmark_log_A, fps_resultA, f'{save_path}/a', binA_prefix,
+                                     benchmark_log_B, fps_resultB, f'{save_path}/b',binB_prefix)
+        self.write_into_max_csv(self.compare_max_file, self.compare_max_lst)
+        if not self.single and self.need_layer_info:
+            self.get_analyze_data(save_path, binA_prefix, binA, binB_prefix, binB)
+        if self.single and self.need_layer_info:
+            self.get_analyze_data(save_path, binA_prefix, binA)
         self.closefile()
 
     def run_benmark_app(self, bin, env="", model="", common_args="", log_file="", out_file="",
@@ -207,27 +209,59 @@ class Process:
         para, val = env.split("=")
         return para, val
 
-    def get_filter_data(self, benchmark_log_A, benchmark_log_B, fps_resultA, fps_resultB, precision, reportA, reportB):
-        model_filter = FilterModel(benchmark_log_A, benchmark_log_B, fps_resultA, fps_resultB, self.config)
-        results_lst, result_sort_sets = model_filter.filter_res()
+    def get_analyze_data(self, save_path, binA_prefix, binA, binB_prefix="", binB=""):
+        create_compare_res = Analyze(self.cpus, self.benchdnn, f'{save_path}/json_data',
+                                     f'{save_path}/detail_layer_{binA_prefix}_{binB_prefix}.csv',
+                                     binA_prefix, binB_prefix, binA, binB)
+        create_compare_res.get_data()
+
+    def create_each_layer_json_data(self, save_path, model_path, binA_prefix, binB_prefix=""):
+        create_layer_json = CompareModel(f'{save_path}/exec_graph_A.xml', f'{save_path}/exec_graph_B.xml',
+                                         model_path, f'{save_path}/testA.log', f'{save_path}/testB.log',
+                                         binA_prefix, binB_prefix, f'{save_path}/a', f'{save_path}/b', save_path)
+        create_layer_json.run_create_compare_csv_tool()
+
+    def get_filter_data(self, save_path, model_path, benchmark_log_A, fps_resultA, reportA, binA_prefix,
+                        benchmark_log_B, fps_resultB, reportB, binB_prefix):
+        self.get_max_csv_data(save_path, model_path, benchmark_log_A, fps_resultA, reportA, binA_prefix,
+                              benchmark_log_B, fps_resultB, reportB, binB_prefix)
+
+    def get_single_data(self, save_path, model_path, benchmark_log_A, fps_resultA, reportA, binA_prefix):
+        self.get_max_csv_data(save_path, model_path, benchmark_log_A, fps_resultA, reportA, binA_prefix)
+
+    def get_max_csv_data(self, save_path, model_path, benchmark_log_A, fps_resultA, reportA, binA_prefix,
+                         benchmark_log_B="", fps_resultB="", reportB="", binB_prefix=""):
+        model = Model(self.config, benchmark_log_A, fps_resultA, benchmark_log_B, fps_resultB)
+        results_lst, result_sort_sets = model.filter_res()
         self.compare_max_lst.append(results_lst)
-        save_path = f'{self.script_path}/{self.config[precision]["save_folder"]}'
-        if result_sort_sets:
+        if result_sort_sets and fps_resultB:
             self.filter_model_list.append(result_sort_sets)
-            layer_result = model_filter.run_filter_compare_tool(save_path, reportA, reportB)
+            layer_result = model.run_filter_compare_tool(save_path, reportA, reportB)
             self.write_layer_csv(result_sort_sets, layer_result)
-        return result_sort_sets
+            if self.need_layer_info:
+                self.create_each_layer_json_data(save_path, model_path, binA_prefix, binB_prefix)
+        if self.single:
+            layer_result = model.run_filter_compare_tool(save_path, reportA)
+            self.write_layer_csv(result_sort_sets, layer_result)
+            if self.need_layer_info:
+                self.create_each_layer_json_data(save_path, model_path, binA_prefix)
 
     def write_layer_csv(self, result_sort, layer_result):
         name = result_sort[0]
         binA_fps = result_sort[1]
-        binB_fps = result_sort[2]
-        ratio = (binA_fps-binB_fps)*100/binB_fps
-        self.filter_layer_file.write(f'{name},{binA_fps},{binB_fps},{ratio:.2f}%,{(-1/binA_fps+1/binB_fps)*1000},')
-        result = sorted(layer_result, key=lambda x: x[1])
-        for (n, t) in result:
-            if t < 0:
+        if self.single:
+            self.filter_layer_file.write(f'{name},{binA_fps},')
+            result = sorted(layer_result, key=lambda x: x[1], reverse=True)
+            for (n, t) in result:
                 self.filter_layer_file.write(f'{n},{t},')
+        else:
+            binB_fps = result_sort[2]
+            ratio = (binA_fps-binB_fps)*100/binB_fps
+            self.filter_layer_file.write(f'{name},{binA_fps},{binB_fps},{ratio:.2f}%,{(-1/binA_fps+1/binB_fps)*1000},')
+            result = sorted(layer_result, key=lambda x: x[1])
+            for (n, t) in result:
+                if t < 0:
+                    self.filter_layer_file.write(f'{n},{t},')
         self.filter_layer_file.write('\n')
 
     def write_benchamrk_temp_log(self, file, benchmark_log):
