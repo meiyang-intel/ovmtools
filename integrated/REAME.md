@@ -199,6 +199,10 @@ binB = /home/2/openvino/bin/intel64/Debug/
 ### 5. Some parameters
 `run_times`:  The number of times to run benchmark_app. We will take the one with the largest fps to create the output
 
+`envA=USE_BRG=1,DNNL-ARCH=AVX2`: The environment GroupA. Each environment variable is separated by ","
+
+`envB`: The environment GroupB.
+
 ## run tests
 After setting the config.ini
 ```

@@ -181,18 +181,21 @@ class Process:
                         report_folder="", exec_graph=""):
         # os.chdir(bin)
         print("bin: ", bin)
+        env_lst = []
         if self.config["Mode"]["VERBOSE_CONVERT"]:
             os.environ["VERBOSE_CONVERT"] = bin + "../../../" + self.config["Mode"]["VERBOSE_CONVERT"]
         if self.benchdnn:
             os.environ["OV_CPU_DEBUG_LOG"] = 'CreatePrimitives;conv.cpp;deconv.cpp'
-        if env: para, val = self.process_env(env)
+        if env: env_lst = self.process_env(env)
         result = []
         if not os.path.exists(report_folder):
             os.makedirs(report_folder)
         out_lst = []
         for i in range(int(self.config["Basic"]["run_times"])):
             log_file.write(f'========================= {bin} testing {model}...\n')
-            if env: os.environ[para] = val
+            if env_lst:
+                for para, val in env_lst:
+                    os.environ[para] = val
             if eval(self.config["Mode"]["numactl"]):
                 bin_cmd = 'numactl -C ' + self.cpus + ' -m ' + self.node + f' {bin}/benchmark_app' + \
                           ' -m ' + model + " " + common_args + ' -exec_graph_path ' + exec_graph + \
@@ -223,8 +226,11 @@ class Process:
         return out_lst, result
 
     def process_env(self, env):
-        para, val = env.split("=")
-        return para, val
+        env_tmp = env.split(",")
+        env_lst = []
+        for e in env_tmp:
+            env_lst.append(e.split("="))
+        return env_lst
 
     def get_analyze_data(self, save_path, binA_prefix, binA, binB_prefix="", binB=""):
         create_compare_res = Analyze(self.cpus, self.benchdnn, f'{save_path}/json_data',
