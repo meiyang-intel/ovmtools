@@ -19,7 +19,16 @@ sudo mount -t nfs 10.67.108.173:/home/vsi/nfs_share ./nfs
 want to set bool parameters, please use `True` or `False`. Pay attention to capitalization.***
 
 ### 1. Common configuration
-- Compare two versions of binary
+- Compare two versions of binary. 
+
+The output is 
+1. Compare the model data with fps lower than 5% under the two versions of binary, binA_prefix.vs.binB_prefix.max.csv,
+"model,binA_prefix.f32,binB_prefix.f32,ratio (A-B)/B,geomean" d
+2. For models with fps below 5%, show the layer with the most difference in each model, 
+binA_prefix.layer.csv, "name,binA_prefix.f32_fps,binB_prefix.f32_fps,ratio,delta(ms),layer1,time1(ms),,,,,,,,,,"
+3. For models with fps below 5%, show the running time of each layer of each model,detail_layer_binA_prefix_binB_prefix.csv, 
+"model_name,layer_name,layer_type,binA_prefix,binA_prefix_benchdnn_cmd,binA_prefix_time,binA_prefix_benchdnn_time_average,binA_prefix_benchdnn_time_min,binB_prefix,binB_prefix_cmd,binB_prefix_time,binB_prefix_benchdnn_time_average,binB_prefix_benchdnn_time_min,(binA_prefix_time - binB_prefix_time)/binB_prefix_time,(binA_prefix_benchdnn_time_average - binB_prefix_benchdnn_time_average)/binB_prefix_benchdnn_time_average,(binA_prefix_benchdnn_time_min - binB_prefix_benchdnn_time_min)/binB_prefix_benchdnn_time_min
+" 
 ```
 [Basic]
 cpus = 4,5
