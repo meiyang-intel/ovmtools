@@ -10,21 +10,21 @@ class Model():
         self.fpsB = fpsB
 
     def median(self, fps_res):
-        v0 = float(fps_res[0].split()[0])
-        v1 = float(fps_res[1].split()[0])
-        v2 = float(fps_res[2].split()[0])
+        v_lst = []
+        for i in fps_res:
+            v_lst.append(float(i.split()[0]))
         # v = v0 + v1 + v2 - max([v0, v1, v2]) - min([v0, v1, v2])
-        v = max([v0, v1, v2])
+        v = max(v_lst)
         results_data = (v, fps_res[0].split()[1])
-        return results_data
+        return results_data, v_lst.index(max(v_lst))
 
     def filter_res(self):
-        fpsA_median = self.median(self.fpsA)
+        fpsA_median, _ = self.median(self.fpsA)
         if eval(self.config['Mode']['single']):
             results_lst = ','.join([f'{fpsA_median[1]},{fpsA_median[0]:.2f}'])
             result_sort_sets = (fpsA_median[1], fpsA_median[0])
             return results_lst, result_sort_sets
-        fpsB_median = self.median(self.fpsB)
+        fpsB_median, _ = self.median(self.fpsB)
         ratio = (fpsA_median[0] - fpsB_median[0]) / fpsB_median[0]
         geomean = fpsA_median[0] / fpsB_median[0]
         results_lst = ','.join([f'{fpsA_median[1]},{fpsA_median[0]:.2f},{fpsB_median[0]:.2f}, {ratio:.2f}, {geomean:.2f}'])

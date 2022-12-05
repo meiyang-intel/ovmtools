@@ -18,7 +18,126 @@ sudo mount -t nfs 10.67.108.173:/home/vsi/nfs_share ./nfs
 ***Tips: If you do not use some non-bool parameters, please set them to empty, do not delete keywords. Such as binB="". If you 
 want to set bool parameters, please use `True` or `False`. Pay attention to capitalization.***
 
-### 1. Support single model in the same environment. No comparison
+### 1. Common configuration
+- Compare two versions of binary
+```
+[Basic]
+cpus = 4,5
+node = 0
+run_times = 2
+
+[BIN]
+binA = /home/ruiqiyang/disk/openVINO/test_cc_openvino/openvino/bin/intel64/Debug/
+binB = /home/ruiqiyang/disk/openVINO/openvino/bin/intel64/Release/
+
+[FP32]
+model_path=/home/ruiqiyang/disk/openVINO/ovmtools/fp32_test_model
+binA_prefix=brg.f32
+binB_prefix=jit.f32
+common_args= -infer_precision=f32 -hint none -t=5 -b=1 -nireq=1 -nstreams=1 -nthreads=4 -json_stats -report_type=detailed_counters
+
+[INT8]
+model_path=/home/ruiqiyang/disk/openVINO/ovmtools/int8_test_model
+binA_prefix=brg.i8
+binB_prefix=jit.i8
+common_args=-hint none -t=5 -b=1 -nireq=1 -nstreams=1 -nthreads=4 -json_stats -report_type=detailed_counters
+
+[Mode]
+single=False
+numactl=True
+need_run_benchdnn=False
+VERBOSE_CONVERT=/src/plugins/intel_cpu/thirdparty/onednn/scripts/verbose_converter
+diff_bin=True
+diff_env=False
+envA=""
+envB=""
+
+[Filter]
+need_filter=True
+threshold=-0.05
+
+```
+- Compare two environments of binary
+```
+[Basic]
+cpus = 4,5
+node = 0
+run_times = 2
+
+[BIN]
+binA = /home/ruiqiyang/disk/openVINO/test_cc_openvino/openvino/bin/intel64/Debug/
+binB = 
+
+[FP32]
+model_path=/home/ruiqiyang/disk/openVINO/ovmtools/fp32_test_model
+binA_prefix=brg.f32
+binB_prefix=jit.f32
+common_args= -infer_precision=f32 -hint none -t=5 -b=1 -nireq=1 -nstreams=1 -nthreads=4 -json_stats -report_type=detailed_counters
+
+[INT8]
+model_path=/home/ruiqiyang/disk/openVINO/ovmtools/int8_test_model
+binA_prefix=brg.i8
+binB_prefix=jit.i8
+common_args=-hint none -t=5 -b=1 -nireq=1 -nstreams=1 -nthreads=4 -json_stats -report_type=detailed_counters
+
+[Mode]
+single=False
+numactl=True
+need_run_benchdnn=False
+VERBOSE_CONVERT=/src/plugins/intel_cpu/thirdparty/onednn/scripts/verbose_converter
+diff_bin=False
+
+diff_env=True
+envA=USE_BRG=1
+envB=USE_BRG=0
+
+[Filter]
+need_filter=True
+threshold=-0.05
+
+```
+- No comparison
+```
+[Basic]
+cpus = 4,5
+node = 0
+run_times = 2
+
+[BIN]
+binA = /home/ruiqiyang/disk/openVINO/test_cc_openvino/openvino/bin/intel64/Debug/
+binB = /home/ruiqiyang/disk/openVINO/openvino/bin/intel64/Release/
+
+[FP32]
+model_path=/home/ruiqiyang/disk/openVINO/ovmtools/fp32_test_model
+binA_prefix=brg.f32
+binB_prefix=jit.f32
+common_args= -infer_precision=f32 -hint none -t=5 -b=1 -nireq=1 -nstreams=1 -nthreads=4 -json_stats -report_type=detailed_counters
+
+[INT8]
+model_path=/home/ruiqiyang/disk/openVINO/ovmtools/int8_test_model
+binA_prefix=brg.i8
+binB_prefix=jit.i8
+common_args=-hint none -t=5 -b=1 -nireq=1 -nstreams=1 -nthreads=4 -json_stats -report_type=detailed_counters
+
+[Mode]
+single=True
+numactl=True
+
+need_run_benchdnn=False
+VERBOSE_CONVERT=/src/plugins/intel_cpu/thirdparty/onednn/scripts/verbose_converter
+diff_bin=
+diff_env=
+envA=USE_BRG=1
+envB=USE_BRG=0
+
+[Filter]
+# Filtering models with reduced FPS
+need_filter=True
+threshold=-0.05
+
+```
+
+### 2. Support single model in the same environment. No comparison
 
 If you only want to display the situation under the fixed environment variables of a model, please configure as follows
 ```
@@ -27,7 +146,7 @@ If you only want to display the situation under the fixed environment variables 
 single=True
 ```
 
-### 2. Support for comparing the performance results of two versions of binary
+### 3. Support for comparing the performance results of two versions of binary
 ```
 [Mode]
 single=False
@@ -43,7 +162,7 @@ threshold=-0.05
 need_filter=True
 threshold=0
 ```
-### 3. Support for comparing the performance results of two different environments
+### 4. Support for comparing the performance results of two different environments
 ```
 [Mode]
 single=False
@@ -68,9 +187,8 @@ binB = ""
 binA = /home/1/openvino/bin/intel64/Debug/ 
 binB = /home/2/openvino/bin/intel64/Debug/
  ```
-### 4. Some parameters
-`need_run_benchdnn`:  If you want to run the benchdnn command in the linux command interface, 
-please set this parameter to True. The premise is that there is a print verbose in the benchmark_app
+### 5. Some parameters
+`run_times`:  The number of times to run benchmark_app. We will take the one with the largest fps to create the output
 
 ## run tests
 After setting the config.ini
