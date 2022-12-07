@@ -204,7 +204,7 @@ class Process:
                           ' -m ' + model + " " + common_args + ' -exec_graph_path ' + exec_graph + \
                           ' -report_folder=' + report_folder
             print("cmd: ", bin_cmd)
-            outputA = subprocess.run(bin_cmd, shell=True, capture_output=True)
+            outputA = subprocess.run(bin_cmd, shell=True, capture_output=True, env=os.environ.copy())
             out = outputA.stdout.decode()
             out_lst.append(out)
             # print("benchmark detail log: ", out)
