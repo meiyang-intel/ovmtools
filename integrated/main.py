@@ -182,10 +182,9 @@ class Process:
         # os.chdir(bin)
         print("bin: ", bin)
         env_lst = []
-        if self.config["Mode"]["VERBOSE_CONVERT"]:
-            os.environ["VERBOSE_CONVERT"] = bin + "../../../" + self.config["Mode"]["VERBOSE_CONVERT"]
         if self.benchdnn:
             os.environ["OV_CPU_DEBUG_LOG"] = 'CreatePrimitives;conv.cpp;deconv.cpp'
+            os.environ["VERBOSE_CONVERT"] = bin + "../../../src/plugins/intel_cpu/thirdparty/onednn/scripts/verbose_converter"
         if env: env_lst = self.process_env(env)
         result = []
         if not os.path.exists(report_folder):
