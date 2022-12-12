@@ -234,7 +234,7 @@ onednn_verbose,info,prim_template:operation,engine,primitive,implementation,prop
         if my_verbose_converter:
             status, output = my_verbose_converter(verbose_level=0, parser='oneDNN',
                                                   input=all_verbose.splitlines(), action='generate',
-                                                  generator='benchdnn', split_output=False)
+                                                  generator='benchdnn', split_output=False, agg_keys=None)
             if output != None:
                 for key, value in output.items():
                     benchdnn = f"./benchdnn --fix-times-per-prb=100 --mode=p {value}"
