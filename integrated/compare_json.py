@@ -137,14 +137,14 @@ class Analyze(object):
     def __run_benchdnn__(self, cmd, flag):
         average_t = "0"
         min_t = "0"
-        if self.benchdnn_flag:
+        if not self.benchdnn_flag:
             return 0, 0
         if flag == "a":
             path = "cd " + self.binA
-            status, result = subprocess.getstatusoutput(path + "numactl -C " + self.cpu + " -m 0 -- " + cmd)
+            status, result = subprocess.getstatusoutput(path + "&& numactl -C " + self.cpu + " -m 0 -- " + cmd)
         elif flag == "b":
             path = "cd " + self.binB
-            status, result = subprocess.getstatusoutput(path + "numactl -C " + self.cpu + " -m 0 -- " + cmd)
+            status, result = subprocess.getstatusoutput(path + "&& numactl -C " + self.cpu + " -m 0 -- " + cmd)
         # assert status == 0, "Error running benchdnn"
         print("cmd: ", cmd)
         if status != 0:
