@@ -186,7 +186,7 @@ class Process:
         env_lst = []
         if self.benchdnn:
             os.environ["OV_CPU_DEBUG_LOG"] = 'CreatePrimitives;conv.cpp;deconv.cpp'
-            os.environ["VERBOSE_CONVERT"] = bin + "/../../../src/plugins/intel_cpu/thirdparty/onednn/scripts/verbose_converter"
+            os.environ["VERBOSE_CONVERT"] = "/home/meiyang/repo/openvino/src/plugins/intel_cpu/thirdparty/onednn/scripts/verbose_converter"
         if env: env_lst = self.process_env(env)
         result = []
         if not os.path.exists(report_folder):
