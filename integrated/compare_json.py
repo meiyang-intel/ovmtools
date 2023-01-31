@@ -7,11 +7,12 @@ import subprocess
 
 
 class CompareModel():
-    def __init__(self, exec_graph_A, exec_graph_B, model, log_file_A, log_file_B, prefixA, prefixB,
+    def __init__(self, exec_graph_A, exec_graph_B, modelA, modelB, log_file_A, log_file_B, prefixA, prefixB,
                  reportA, reportB, output_file):
         self.exec_graph_A = exec_graph_A
         self.exec_graph_B = exec_graph_B
-        self.model = model
+        self.modelA = modelA
+        self.modelB = modelB
         self.log_file_A = log_file_A
         self.log_file_B = log_file_B
         self.prefixA = prefixA
@@ -22,7 +23,7 @@ class CompareModel():
 
     def run_create_compare_csv_tool(self):
         out_path = os.path.join(self.output_file, "json_data")
-        result = create_compare_csv.main(self.exec_graph_A, self.exec_graph_B, self.model,
+        result = create_compare_csv.main(self.exec_graph_A, self.exec_graph_B, self.modelA, self.modelB,
                                          self.log_file_A, self.log_file_B, self.prefixA, self.prefixB,
                                          self.reportA, self.reportB, out_path)
         return result

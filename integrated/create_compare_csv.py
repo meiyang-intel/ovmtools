@@ -163,8 +163,8 @@ def show_compare_result(log_file_A, log_file_B, all_dict, prefixA, prefixB, repo
         A_info = []
         B_info = []
         time_diff = 0
-        info0, time0, layer0, exectype0, layout0 = get_exec_info(pc_by_node0, name)  # prefixA
-        info1, time1, layer1, exectype1, layout1 = get_exec_info(pc_by_node1, name)  # prefixB
+        info0, time0, layer0, exectype0, layout0 = get_exec_info(pc_by_node0, name, exec_graph_A)  # prefixA
+        info1, time1, layer1, exectype1, layout1 = get_exec_info(pc_by_node1, name, exec_graph_B)  # prefixB
         layer_info = [layerid, name]
         A_info = [layer0, exectype0, layout0, time0]
         B_info = [layer1, exectype1, layout1, time1]
@@ -200,7 +200,7 @@ def show_compare_result(log_file_A, log_file_B, all_dict, prefixA, prefixB, repo
     return all_dict
 
 
-def get_exec_info(pc_by_node, name):
+def get_exec_info(pc_by_node, name, exec_graph):
     def find(pclist, type_name):
         for name, v in pclist:
             if name == type_name:
@@ -209,7 +209,7 @@ def get_exec_info(pc_by_node, name):
     v0 = find(pc_by_node, name)
     if v0:
         time0, layer0, exectype = v0
-        layout = find_layout(exec_graph_A, name)
+        layout = find_layout(exec_graph, name)
         info0 = "{}_{}_{} {:6.1f}".format(layer0, exectype, layout, time0)
     else:
         time0 = 0
@@ -242,8 +242,8 @@ onednn_verbose,info,prim_template:operation,engine,primitive,implementation,prop
     return verbose, benchdnn
 
 
-def write_json_data(all_dict, output_path, model):
-    name = get_output_name(output_path, model)
+def write_json_data(all_dict, output_path):
+    name = "result"
     json_str = json.dumps(all_dict, indent=2)
     with open(os.path.join(output_path, name + ".json"), "w+") as f:
         f.write(json_str)
@@ -290,7 +290,7 @@ class JsonData:
         return exec_dict
 
 
-def main(exec_graph_A, exec_graph_B, model, log_file_A, log_file_B, prefixA, prefixB, reportA, reportB, output_file):
+def main(exec_graph_A, exec_graph_B, modelA, modelB, log_file_A, log_file_B, prefixA, prefixB, reportA, reportB, output_file):
     my_verbose_converter = None
     if 'VERBOSE_CONVERT' in os.environ:
         sys.path.append(os.environ['VERBOSE_CONVERT'])
@@ -313,10 +313,10 @@ def main(exec_graph_A, exec_graph_B, model, log_file_A, log_file_B, prefixA, pre
     else:
         exec_graph_B = ""
 
-    all_dict = {"model_name": model}
+    all_dict = {"modelA_name": modelA, "modelB_name": modelB}
     data_cmp = show_compare_result(log_file_A or './testA.log', log_file_B or './testB.log',
                                    all_dict, prefixA, prefixB, reportA, reportB)
-    write_json_data(data_cmp, output_file or './output', model)
+    write_json_data(data_cmp, output_file or './output')
 
 
 if __name__ == "__main__":
@@ -329,7 +329,8 @@ if __name__ == "__main__":
     parser.add_argument("exec_graph_B", nargs="?")
     parser.add_argument("-s", "--show_verbose", default=True, help="show onednn verbose",
                         type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument("-m", "--model", default="", type=str)
+    parser.add_argument("-mA", "--modelA", default="", type=str)
+    parser.add_argument("-mB", "--modelB", default="", type=str)
     parser.add_argument("-output_file", default="", type=str)
     parser.add_argument("-rA", "--reportA", help="report folderA", default="./a", type=str)
     parser.add_argument("-rB", "--reportB", help="report folderB", default="./b", type=str)
@@ -337,7 +338,7 @@ if __name__ == "__main__":
     parser.add_argument("-pB", "--prefixB", help="prefixB", default="jit", type=str)
     args = parser.parse_args()
 
-    main(args.exec_graph_A, args.exec_graph_B, args.model, args.log_file_A, args.log_file_B,
+    main(args.exec_graph_A, args.exec_graph_B, args.modelA, args.modelB, args.log_file_A, args.log_file_B,
          args.prefixA, args.prefixB, args.reportA, args.reportB, args.output_file)
 
     print("finish")
