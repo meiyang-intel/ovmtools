@@ -62,8 +62,9 @@ class Analyze(object):
 
     def analyze_data(self, json_data):
         res = []
-        model_name = json_data["model_name"]
-        print(model_name)
+        modelA_name = json_data["modelA_name"]
+        modelB_name = json_data["modelB_name"]
+        #print(model_name)
         for layer_id in range(len(json_data) - 1):
             res_layer = []
             print(layer_id)
@@ -96,7 +97,7 @@ class Analyze(object):
             diff_average = self.__get_time_dif__(prefixA_average_t, prefixB_average_t)
             diff_min = self.__get_time_dif__(prefixA_min_t, prefixB_min_t)
 
-            res_layer += [model_name] + [layer_name] + [layer_type] + \
+            res_layer += [modelA_name] + [layer_name] + [layer_type] + \
                          [prefixA_info[0], prefixA_cmd, prefixA_info[2]] + \
                          [str(prefixA_average_t)] + [str(prefixA_min_t)] + \
                          [prefixB_info[0], prefixB_cmd, prefixB_info[2]] + \
